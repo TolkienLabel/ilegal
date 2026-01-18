@@ -1,0 +1,146 @@
+﻿// Elementos do DOM
+const itemSelect = document.getElementById('item-select');
+const quantityInput = document.getElementById('quantity');
+const calculateBtn = document.getElementById('calculate-btn');
+const clearBtn = document.getElementById('clear-btn');
+const resultsDiv = document.getElementById('results');
+const resourcesList = document.getElementById('resources-list');
+const craftTree = document.getElementById('craft-tree');
+
+// Elementos do modal
+const manageRecipesBtn = document.getElementById('manage-recipes-btn');
+const recipeModal = document.getElementById('recipe-modal');
+const closeModalBtn = document.getElementById('close-modal');
+const newItemName = document.getElementById('new-item-name');
+const newItemOutput = document.getElementById('new-item-output');
+const newItemImage = document.getElementById('new-item-image');
+const imagePreview = document.getElementById('image-preview');
+const addMaterialBtn = document.getElementById('add-material-btn');
+const materialsList = document.getElementById('materials-list');
+const saveRecipeBtn = document.getElementById('save-recipe-btn');
+const cancelEditBtn = document.getElementById('cancel-edit-btn');
+const existingRecipes = document.getElementById('existing-recipes');
+const filterRecipes = document.getElementById('filter-recipes');
+
+// Elementos do modal de armazenamento
+const storageInfoBtn = document.getElementById('storage-info-btn');
+const storageModal = document.getElementById('storage-modal');
+const closeStorageModalBtn = document.getElementById('close-storage-modal');
+const exportDataBtn = document.getElementById('export-data-btn');
+const importDataBtn = document.getElementById('import-data-btn');
+const clearStorageBtn = document.getElementById('clear-storage-btn');
+const importFileInput = document.getElementById('import-file-input');
+
+// Elemento de status de sincronização
+const syncStatus = document.getElementById('sync-status');
+
+// Gerenciar receitas customizadas
+let customRecipes = {};
+let recipeImages = {};
+let editingRecipe = null;
+let lastSyncTime = null;
+
+// ===== CONFIGURAÇÃO DO FIREBASE =====
+const firebaseConfig = {
+    databaseURL: "https://primordial-mile-249702-default-rtdb.firebaseio.com/"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const recipesRef = database.ref('crafting/customRecipes');
+const imagesRef = database.ref('crafting/recipeImages');
+
+// Atualizar status de sincronização
+function updateSyncStatus(status, message) {
+    syncStatus.className = 'sync-status ' + status;
+    syncStatus.textContent = message;
+}
+
+// Monitorar conexão do Firebase
+database.ref('.info/connected').on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+        updateSyncStatus('connected', 'Conectado ao Firebase');
+    } else {
+        updateSyncStatus('error', 'Sem conexao');
+    }
+});
+
+// Carregar receitas do Firebase
+function loadCustomRecipes() {
+    updateSyncStatus('syncing', 'Carregando...');
+    
+    recipesRef.once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            customRecipes = data;
+            Object.assign(recipes, customRecipes);
+        }
+        
+        imagesRef.once('value', (snapshot) => {
+            const imageData = snapshot.val();
+            if (imageData) {
+                recipeImages = imageData;
+            }
+            
+            lastSyncTime = new Date();
+            updateSyncStatus('connected', 'Conectado');
+            populateItemSelect();
+        });
+    }).catch((error) => {
+        console.error('Erro ao carregar receitas:', error);
+        updateSyncStatus('error', 'Erro ao carregar');
+    });
+}
+
+// Salvar receitas no Firebase
+function saveCustomRecipes() {
+    updateSyncStatus('syncing', 'Salvando...');
+    
+    const updates = {};
+    updates['/crafting/customRecipes'] = customRecipes;
+    updates['/crafting/recipeImages'] = recipeImages;
+    
+    database.ref().update(updates)
+        .then(() => {
+            lastSyncTime = new Date();
+            updateSyncStatus('connected', 'Salvo no Firebase');
+            setTimeout(() => {
+                updateSyncStatus('connected', 'Conectado');
+            }, 2000);
+        })
+        .catch((error) => {
+            console.error('Erro ao salvar:', error);
+            updateSyncStatus('error', 'Erro ao salvar');
+            alert('Erro ao salvar no Firebase: ' + error.message);
+        });
+}
+
+// Listener em tempo real para mudanças no Firebase
+recipesRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        customRecipes = data;
+        Object.assign(recipes, customRecipes);
+        populateItemSelect();
+    }
+});
+
+imagesRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        recipeImages = data;
+    }
+});
+
+// Preencher o select com os itens disponíveis
+function populateItemSelect() {
+    itemSelect.innerHTML = '<option value="">-- Selecione um item --</option>';
+    const items = Object.keys(recipes).sort();
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item;
+        option.textContent = item;
+        itemSelect.appendChild(option);
+    });
+}

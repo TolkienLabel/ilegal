@@ -31,7 +31,17 @@
             </div>
             
             <button id="calculate-btn">Calcular Recursos</button>
+            <button id="add-to-list-btn" class="add-to-list-btn">➕ Adicionar à Lista</button>
             <button id="clear-btn">Limpar</button>
+        </div>
+        
+        <div id="craft-list-section" class="craft-list-section hidden">
+            <h2>📋 Lista de Crafting</h2>
+            <div id="craft-list"></div>
+            <div class="list-actions">
+                <button id="calculate-total-btn" class="calculate-total-btn">🧮 Calcular Total</button>
+                <button id="clear-list-btn" class="clear-list-btn">🗑️ Limpar Lista</button>
+            </div>
         </div>
         
         <div id="results" class="results hidden">
@@ -40,7 +50,10 @@
             
             <h3>🔄 Árvore de Crafting</h3>
             <div id="craft-tree"></div>
-        </div>Armazenamento -->
+        </div>
+    </div>
+    
+    <!-- Modal de Armazenamento -->
     <div id="storage-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -89,9 +102,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Modal de 
     </div>
     
     <!-- Modal de Gerenciamento de Receitas -->

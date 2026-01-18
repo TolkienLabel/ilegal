@@ -2,17 +2,10 @@
 const itemSelect = document.getElementById('item-select');
 const quantityInput = document.getElementById('quantity');
 const calculateBtn = document.getElementById('calculate-btn');
-const addToListBtn = document.getElementById('add-to-list-btn');
 const clearBtn = document.getElementById('clear-btn');
 const resultsDiv = document.getElementById('results');
 const resourcesList = document.getElementById('resources-list');
 const craftTree = document.getElementById('craft-tree');
-
-// Elementos da lista de crafting
-const craftListSection = document.getElementById('craft-list-section');
-const craftListDiv = document.getElementById('craft-list');
-const calculateTotalBtn = document.getElementById('calculate-total-btn');
-const clearListBtn = document.getElementById('clear-list-btn');
 
 // Elementos do modal
 const manageRecipesBtn = document.getElementById('manage-recipes-btn');
@@ -41,42 +34,22 @@ const importFileInput = document.getElementById('import-file-input');
 // Elemento de status de sincronização
 const syncStatus = document.getElementById('sync-status');
 
-// Configuração do Firebase
-const firebaseConfig = {
-    databaseURL: "https://primordial-mile-249702-default-rtdb.firebaseio.com/"
-};
-
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const recipesRef = database.ref('crafting/customRecipes');
-const imagesRef = database.ref('crafting/recipeImages');
-
 // Gerenciar receitas customizadas
 let customRecipes = {};
-let recipeImages = {};
-let editingRecipe = null;
-let lastSyncTime = null;
-
-// Lista de crafting acumulada
-let craftingList = [];
-
-// Atualizar status de sincronização
-function updateSyncStatus(status, message) {
-    syncStatus.textContent = message;
-    syncStatus.className = 'sync-status sync-' + status;
-}
-
-// Carregar receitas do Firebase
+let recipeImages = {};Firebase
 function loadCustomRecipes() {
     updateSyncStatus('syncing', '🔄 Carregando...');
     
+    // Carregar receitas customizadas
     recipesRef.once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
             customRecipes = data;
+            // Mesclar com as receitas padrão
             Object.assign(recipes, customRecipes);
         }
         
+        // Carregar imagens
         imagesRef.once('value', (snapshot) => {
             const imageData = snapshot.val();
             if (imageData) {
@@ -142,9 +115,29 @@ database.ref('.info/connected').on('value', (snapshot) => {
     }
 });
 
+// Carregar receitas do localStorage
+function loadCustomRecipes() {
+    const saved = localStorage.getItem('customRecipes');
+    if (saved) {
+        customRecipes = JSON.parse(saved);
+        // Mesclar com as receitas padrão
+        Object.assign(recipes, customRecipes);
+    }
+    
+    const savedImages = localStorage.getItem('recipeImages');
+    if (savedImages) {
+        recipeImages = JSON.parse(savedImages);
+    }
+}
+
+// Salvar receitas no localStorage
+function saveCustomRecipes() {
+    localStorage.setItem('customRecipes', JSON.stringify(customRecipes));
+    localStorage.setItem('recipeImages', JSON.stringify(recipeImages));
+}
+
 // Preencher o select com os itens disponíveis
 function populateItemSelect() {
-    itemSelect.innerHTML = '<option value="">-- Selecione um item --</option>';
     const items = Object.keys(recipes).sort();
     items.forEach(item => {
         const option = document.createElement('option');
@@ -171,14 +164,17 @@ function calculateResources(itemName, quantity, level = 0) {
         const recipe = recipes[name];
         
         if (!recipe) {
+            // Item base (não tem receita)
             addResource(name, qty);
             tree.push({ name, quantity: qty, level: lvl, isBase: true });
             return;
         }
         
+        // Calcular quantas vezes precisa craftar
         const craftsNeeded = Math.ceil(qty / recipe.output);
         tree.push({ name, quantity: qty, level: lvl, craftsNeeded, output: recipe.output });
         
+        // Processar cada material necessário
         recipe.materials.forEach(material => {
             const neededQty = material.quantity * craftsNeeded;
             processItem(material.name, neededQty, lvl + 1);
@@ -199,6 +195,7 @@ function formatNumber(num) {
 function displayResources(resources) {
     resourcesList.innerHTML = '';
     
+    // Separar dinheiro dos outros recursos
     const moneyItems = [];
     const otherItems = [];
     
@@ -210,9 +207,11 @@ function displayResources(resources) {
         }
     });
     
+    // Ordenar alfabeticamente
     otherItems.sort((a, b) => a.name.localeCompare(b.name));
     moneyItems.sort((a, b) => a.name.localeCompare(b.name));
     
+    // Exibir recursos normais
     if (otherItems.length > 0) {
         const title = document.createElement('h4');
         title.textContent = 'Materiais:';
@@ -223,11 +222,15 @@ function displayResources(resources) {
         otherItems.forEach(({ name, quantity }) => {
             const div = document.createElement('div');
             div.className = 'resource-item';
-            div.innerHTML = '<span class="resource-name">' + name + '</span><span class="resource-quantity">' + formatNumber(quantity) + '</span>';
+            div.innerHTML = `
+                <span class="resource-name">${name}</span>
+                <span class="resource-quantity">${formatNumber(quantity)}</span>
+            `;
             resourcesList.appendChild(div);
         });
     }
     
+    // Exibir dinheiro
     if (moneyItems.length > 0) {
         const title = document.createElement('h4');
         title.textContent = 'Dinheiro:';
@@ -239,7 +242,10 @@ function displayResources(resources) {
         moneyItems.forEach(({ name, quantity }) => {
             const div = document.createElement('div');
             div.className = 'resource-item resource-money';
-            div.innerHTML = '<span class="resource-name">' + name + '</span><span class="resource-quantity">$' + formatNumber(quantity) + '</span>';
+            div.innerHTML = `
+                <span class="resource-name">${name}</span>
+                <span class="resource-quantity">$${formatNumber(quantity)}</span>
+            `;
             resourcesList.appendChild(div);
         });
     }
@@ -287,6 +293,8 @@ calculateBtn.addEventListener('click', () => {
     displayCraftTree(tree);
     
     resultsDiv.classList.remove('hidden');
+    
+    // Scroll suave para os resultados
     resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
@@ -304,123 +312,9 @@ quantityInput.addEventListener('keypress', (e) => {
     }
 });
 
-// ==== LISTA DE CRAFTING ACUMULADA ====
-
-// Adicionar item à lista
-addToListBtn.addEventListener('click', () => {
-    const selectedItem = itemSelect.value;
-    const quantity = parseInt(quantityInput.value);
-    
-    if (!selectedItem) {
-        alert('Por favor, selecione um item!');
-        return;
-    }
-    
-    if (quantity < 1) {
-        alert('A quantidade deve ser pelo menos 1!');
-        return;
-    }
-    
-    craftingList.push({ item: selectedItem, quantity: quantity });
-    
-    displayCraftingList();
-    craftListSection.classList.remove('hidden');
-    
-    itemSelect.value = '';
-    quantityInput.value = 1;
-});
-
-// Exibir lista de crafting
-function displayCraftingList() {
-    craftListDiv.innerHTML = '';
-    
-    if (craftingList.length === 0) {
-        craftListSection.classList.add('hidden');
-        return;
-    }
-    
-    craftingList.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'craft-list-item';
-        div.innerHTML = '<span class="list-item-name">' + item.item + '</span><span class="list-item-quantity">x' + formatNumber(item.quantity) + '</span><button class="remove-list-item" onclick="removeFromList(' + index + ')">🗑️</button>';
-        craftListDiv.appendChild(div);
-    });
-}
-
-// Remover item da lista
-window.removeFromList = function(index) {
-    craftingList.splice(index, 1);
-    displayCraftingList();
-};
-
-// Calcular total de todos os itens da lista
-calculateTotalBtn.addEventListener('click', () => {
-    if (craftingList.length === 0) {
-        alert('A lista está vazia!');
-        return;
-    }
-    
-    const totalResources = {};
-    const allTrees = [];
-    
-    craftingList.forEach(({ item, quantity }) => {
-        const { resources, tree } = calculateResources(item, quantity);
-        
-        Object.entries(resources).forEach(([name, qty]) => {
-            if (totalResources[name]) {
-                totalResources[name] += qty;
-            } else {
-                totalResources[name] = qty;
-            }
-        });
-        
-        allTrees.push({ item, quantity, tree });
-    });
-    
-    displayResources(totalResources);
-    
-    craftTree.innerHTML = '<h4>📋 Detalhamento por Item:</h4>';
-    allTrees.forEach(({ item, quantity, tree }) => {
-        const header = document.createElement('div');
-        header.className = 'tree-header';
-        header.textContent = '▶ ' + item + ' x' + formatNumber(quantity);
-        header.style.fontWeight = 'bold';
-        header.style.marginTop = '15px';
-        header.style.color = '#2196F3';
-        craftTree.appendChild(header);
-        
-        tree.forEach(treeItem => {
-            const div = document.createElement('div');
-            div.className = 'tree-item tree-level-' + Math.min(treeItem.level, 3);
-            
-            const indent = '  '.repeat(treeItem.level);
-            const arrow = treeItem.level > 0 ? '└─ ' : '';
-            
-            if (treeItem.isBase) {
-                div.textContent = indent + arrow + treeItem.name + ' x' + formatNumber(treeItem.quantity);
-            } else {
-                div.textContent = indent + arrow + treeItem.name + ' x' + formatNumber(treeItem.quantity) + ' (craftar ' + treeItem.craftsNeeded + 'x, rende ' + treeItem.output + ' cada)';
-            }
-            
-            craftTree.appendChild(div);
-        });
-    });
-    
-    resultsDiv.classList.remove('hidden');
-    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-});
-
-// Limpar lista de crafting
-clearListBtn.addEventListener('click', () => {
-    if (confirm('Tem certeza que deseja limpar toda a lista?')) {
-        craftingList = [];
-        displayCraftingList();
-        resultsDiv.classList.add('hidden');
-    }
-});
-
 // Inicializar
 loadCustomRecipes();
+populateItemSelect();
 
 // Eventos do modal
 manageRecipesBtn.addEventListener('click', () => {
@@ -454,7 +348,11 @@ newItemImage.addEventListener('input', (e) => {
 addMaterialBtn.addEventListener('click', () => {
     const materialRow = document.createElement('div');
     materialRow.className = 'material-row';
-    materialRow.innerHTML = '<input type="text" class="material-name" placeholder="Nome do material"><input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1"><button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>';
+    materialRow.innerHTML = `
+        <input type="text" class="material-name" placeholder="Nome do material">
+        <input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1">
+        <button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>
+    `;
     materialsList.appendChild(materialRow);
 });
 
@@ -484,6 +382,7 @@ saveRecipeBtn.addEventListener('click', () => {
         return;
     }
     
+    // Coletar materiais
     const materials = [];
     const materialRows = materialsList.querySelectorAll('.material-row');
     
@@ -496,17 +395,20 @@ saveRecipeBtn.addEventListener('click', () => {
         }
     }
     
+    // Criar receita
     const recipe = {
         materials: materials,
         output: output
     };
     
+    // Se estiver editando uma receita existente, remover a antiga
     if (editingRecipe && editingRecipe !== itemName) {
         delete recipes[editingRecipe];
         delete customRecipes[editingRecipe];
         delete recipeImages[editingRecipe];
     }
     
+    // Salvar
     recipes[itemName] = recipe;
     customRecipes[itemName] = recipe;
     
@@ -517,8 +419,12 @@ saveRecipeBtn.addEventListener('click', () => {
     }
     
     saveCustomRecipes();
+    
+    // Atualizar interface
     populateItemSelect();
     displayExistingRecipes();
+    
+    // Limpar formulário
     clearForm();
     
     const action = editingRecipe ? 'atualizada' : 'adicionada';
@@ -533,7 +439,13 @@ function clearForm() {
     newItemOutput.value = 1;
     newItemImage.value = '';
     imagePreview.innerHTML = '';
-    materialsList.innerHTML = '<div class="material-row"><input type="text" class="material-name" placeholder="Nome do material"><input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1"><button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button></div>';
+    materialsList.innerHTML = `
+        <div class="material-row">
+            <input type="text" class="material-name" placeholder="Nome do material">
+            <input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1">
+            <button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>
+        </div>
+    `;
     editingRecipe = null;
     saveRecipeBtn.textContent = '💾 Salvar Receita';
     cancelEditBtn.classList.add('hidden');
@@ -550,6 +462,7 @@ window.editRecipe = function(name) {
     const recipe = recipes[name];
     if (!recipe) return;
     
+    // Preencher formulário
     newItemName.value = name;
     newItemOutput.value = recipe.output;
     newItemImage.value = recipeImages[name] || '';
@@ -558,16 +471,27 @@ window.editRecipe = function(name) {
         imagePreview.innerHTML = '<img src="' + recipeImages[name] + '" alt="Preview">';
     }
     
+    // Preencher materiais
     materialsList.innerHTML = '';
     if (recipe.materials.length > 0) {
         recipe.materials.forEach(material => {
             const row = document.createElement('div');
             row.className = 'material-row';
-            row.innerHTML = '<input type="text" class="material-name" placeholder="Nome do material" value="' + material.name + '"><input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="' + material.quantity + '"><button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>';
+            row.innerHTML = `
+                <input type="text" class="material-name" placeholder="Nome do material" value="${material.name}">
+                <input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="${material.quantity}">
+                <button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>
+            `;
             materialsList.appendChild(row);
         });
     } else {
-        materialsList.innerHTML = '<div class="material-row"><input type="text" class="material-name" placeholder="Nome do material"><input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1"><button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button></div>';
+        materialsList.innerHTML = `
+            <div class="material-row">
+                <input type="text" class="material-name" placeholder="Nome do material">
+                <input type="number" class="material-quantity" placeholder="Quantidade" min="1" value="1">
+                <button class="remove-material-btn" onclick="removeMaterial(this)">🗑️</button>
+            </div>
+        `;
     }
     
     editingRecipe = name;
@@ -575,28 +499,8 @@ window.editRecipe = function(name) {
     cancelEditBtn.classList.remove('hidden');
     newItemName.disabled = !customRecipes.hasOwnProperty(name);
     
+    // Scroll para o topo do modal
     document.querySelector('.modal-content').scrollTop = 0;
-};
-
-// Deletar receita
-window.deleteRecipe = function(name) {
-    if (!customRecipes.hasOwnProperty(name)) {
-        alert('Só é possível deletar receitas customizadas!');
-        return;
-    }
-    
-    if (confirm('Tem certeza que deseja excluir a receita "' + name + '"?')) {
-        delete recipes[name];
-        delete customRecipes[name];
-        delete recipeImages[name];
-        saveCustomRecipes();
-        populateItemSelect();
-        displayExistingRecipes(filterRecipes.value);
-        
-        if (editingRecipe === name) {
-            clearForm();
-        }
-    }
 };
 
 // Exibir receitas existentes
@@ -627,19 +531,47 @@ function displayExistingRecipes(filter = '') {
             ? '<div class="recipe-card-image"><img src="' + imageUrl + '" alt="' + name + '"></div>'
             : '<div class="recipe-card-image no-image">📦</div>';
         
-        const editBtn = '<button class="edit-recipe-btn" onclick="editRecipe(\'' + name.replace(/'/g, "\\'") + '\')">✏️ Editar</button>';
-        const deleteBtn = isCustom ? '<button class="delete-recipe-btn" onclick="deleteRecipe(\'' + name.replace(/'/g, "\\'") + '\')">🗑️ Excluir</button>' : '';
+        const editBtn = '<button class="edit-recipe-btn" onclick="editRecipe(\'' + name.replace(/'/g, "\\\'" ) + '\')">✏️ Editar</button>';
+        const deleteBtn = isCustom ? '<button class="delete-recipe-btn" onclick="deleteRecipe(\'' + name.replace(/'/g, "\\\'" ) + '\')">🗑️ Excluir</button>' : '';
         
-        card.innerHTML = imageHtml + '<div class="recipe-card-content"><h4>' + name + (isCustom ? ' ⭐' : '') + '</h4><div class="recipe-info">Rende: ' + recipe.output + ' unidade(s)</div><div class="recipe-materials">Materiais: ' + materialsText + '</div><div class="recipe-actions">' + editBtn + deleteBtn + '</div></div>';
-        
-        existingRecipes.appendChild(card);
+        card.innerHTML = `
+            ${imageHtml}
+            <div class="recipe-card-content">
+                <h4>${name} ${isCustom ? '⭐' : ''}</h4>
+                <div class="recipe-info">Rende: ${recipe.output} unidade(s)</div>
+                <div class="recipe-materials">Materiais: ${materialsText}</div>
+                <div class="recipe-actions">
+                    ${editBtn}
+                    ${deleteBtn}
+                </div>
+       Status do Firebase
+    database.ref('.info/connected').once('value', (snapshot) => {
+        const connected = snapshot.val();
+        document.getElementById('firebase-status').textContent = connected ? '🟢 Conectado' : '🔴 Desconectado';
     });
-}
+    
+    // Última sincronização
+    const lastSync = lastSyncTime ? lastSyncTime.toLocaleString('pt-BR') : 'Nunca';
+    document.getElementById('last-sync').textContent = lastSync{
+        delete recipes[name];
+        delete customRecipes[name];
+        delete recipeImages[name];
+        saveCustomRecipes();
+        populateItemSelect();
+        displayExistingRecipes(filterRecipes.value);
+        
+        if (editingRecipe === name) {
+            clearForm();
+        }
+    }
+};
 
 // Filtro de receitas
 filterRecipes.addEventListener('input', (e) => {
     displayExistingRecipes(e.target.value);
 });
+
+// ==== MODAL DE ARMAZENAMENTO ====
 
 // Abrir modal de armazenamento
 storageInfoBtn.addEventListener('click', () => {
@@ -660,21 +592,28 @@ storageModal.addEventListener('click', (e) => {
 
 // Atualizar informações de armazenamento
 function updateStorageInfo() {
-    database.ref('.info/connected').once('value', (snapshot) => {
-        const connected = snapshot.val();
-        document.getElementById('firebase-status').textContent = connected ? '🟢 Conectado' : '🔴 Desconectado';
-    });
+    // Informações do navegador
+    const browserInfo = navigator.userAgent.split(/[()]/)[1] || 'Desconhecido';
+    document.getElementById('browser-info').textContent = browserInfo;
     
-    const lastSync = lastSyncTime ? lastSyncTime.toLocaleString('pt-BR') : 'Nunca';
-    document.getElementById('last-sync').textContent = lastSync;
+    // Calcular tamanho
+    const customRecipesStr = localStorage.getItem('customRecipes') || '{}';
+    const recipeImagesStr = localStorage.getItem('recipeImages') || '{}';
+    const totalSize = new Blob([customRecipesStr + recipeImagesStr]).size;
+    const sizeKB = (totalSize / 1024).toFixed(2);
+    document.getElementById('storage-size').textContent = sizeKB + ' KB';
     
+    // Contadores
     const customCount = Object.keys(customRecipes).length;
     const imagesCount = Object.keys(recipeImages).length;
     document.getElementById('custom-count').textContent = customCount;
     document.getElementById('images-count').textContent = imagesCount;
     
-    document.getElementById('custom-recipes-display').textContent = JSON.stringify(customRecipes, null, 2);
-    document.getElementById('images-display').textContent = JSON.stringify(recipeImages, null, 2);
+    // Exibir dados
+    document.getElementById('custom-recipes-display').textContent = 
+        JSON.stringify(customRecipes, null, 2);
+    document.getElementById('images-display').textContent = 
+        JSON.stringify(recipeImages, null, 2);
 }
 
 // Exportar dados
@@ -734,6 +673,7 @@ importFileInput.addEventListener('change', (e) => {
     };
     reader.readAsText(file);
     
+    // Limpar input para permitir reimportar o mesmo arquivo
     e.target.value = '';
 });
 
@@ -750,15 +690,18 @@ clearStorageBtn.addEventListener('click', () => {
         if (confirm('🚨 Tem CERTEZA ABSOLUTA? Esta ação não pode ser desfeita!')) {
             updateSyncStatus('syncing', '🔄 Limpando...');
             
+            // Limpar no Firebase
             const updates = {};
             updates['/crafting/customRecipes'] = null;
             updates['/crafting/recipeImages'] = null;
             
             database.ref().update(updates)
                 .then(() => {
+                    // Limpar localmente
                     customRecipes = {};
                     recipeImages = {};
                     
+                    // Recarregar receitas padrão
                     Object.keys(recipes).forEach(key => {
                         if (!recipes[key].materials) {
                             delete recipes[key];

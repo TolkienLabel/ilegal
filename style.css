@@ -162,6 +162,16 @@ button {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.add-to-list-btn {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.add-to-list-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+}
+
 #clear-btn {
     background: #e0e0e0;
     color: #333;
@@ -169,6 +179,109 @@ button {
 
 #clear-btn:hover {
     background: #d0d0d0;
+}
+
+/* Lista de Crafting */
+.craft-list-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    border: 2px solid #667eea;
+}
+
+.craft-list-section.hidden {
+    display: none;
+}
+
+.craft-list-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+#craft-list {
+    margin-bottom: 15px;
+}
+
+.craft-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.list-item-name {
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.list-item-quantity {
+    color: #667eea;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.remove-list-item {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.remove-list-item:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+}
+
+.list-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.calculate-total-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.calculate-total-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.clear-list-btn {
+    background: #ff6b6b;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.clear-list-btn:hover {
+    background: #ee5a52;
+    transform: translateY(-2px);
 }
 
 .results {
