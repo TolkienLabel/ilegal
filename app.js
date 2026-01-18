@@ -257,15 +257,15 @@ function displayCraftTree(tree) {
     
     tree.forEach(item => {
         const div = document.createElement('div');
-        div.className = `tree-item tree-level-${Math.min(item.level, 3)}`;
+        div.className = 'tree-item tree-level-' + Math.min(item.level, 3);
         
         const indent = '  '.repeat(item.level);
         const arrow = item.level > 0 ? '└─ ' : '';
         
         if (item.isBase) {
-            div.textContent = `${indent}${arrow}${item.name} x${formatNumber(item.quantity)}`;
+            div.textContent = indent + arrow + item.name + ' x' + formatNumber(item.quantity);
         } else {
-            div.textContent = `${indent}${arrow}${item.name} x${formatNumber(item.quantity)} (craftar ${item.craftsNeeded}x, rende ${item.output} cada)`;
+            div.textContent = indent + arrow + item.name + ' x' + formatNumber(item.quantity) + ' (craftar ' + item.craftsNeeded + 'x, rende ' + item.output + ' cada)';
         }
         
         craftTree.appendChild(div);
@@ -338,7 +338,7 @@ recipeModal.addEventListener('click', (e) => {
 newItemImage.addEventListener('input', (e) => {
     const url = e.target.value.trim();
     if (url) {
-        imagePreview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML='❌ Imagem inválida'">`;
+        imagePreview.innerHTML = '<img src="' + url + '" alt="Preview" onerror="this.parentElement.innerHTML=\'❌ Imagem inválida\'">';
     } else {
         imagePreview.innerHTML = '';
     }
@@ -428,7 +428,7 @@ saveRecipeBtn.addEventListener('click', () => {
     clearForm();
     
     const action = editingRecipe ? 'atualizada' : 'adicionada';
-    alert(`Receita "${itemName}" ${action} com sucesso!`);
+    alert('Receita "' + itemName + '" ' + action + ' com sucesso!');
     
     editingRecipe = null;
 });
@@ -468,7 +468,7 @@ window.editRecipe = function(name) {
     newItemImage.value = recipeImages[name] || '';
     
     if (recipeImages[name]) {
-        imagePreview.innerHTML = `<img src="${recipeImages[name]}" alt="Preview">`;
+        imagePreview.innerHTML = '<img src="' + recipeImages[name] + '" alt="Preview">';
     }
     
     // Preencher materiais
@@ -521,18 +521,18 @@ function displayExistingRecipes(filter = '') {
         card.className = 'recipe-card';
         
         const materialsText = recipe.materials.length > 0
-            ? recipe.materials.map(m => `${m.name} (${m.quantity})`).join(', ')
+            ? recipe.materials.map(m => m.name + ' (' + m.quantity + ')').join(', ')
             : 'Nenhum material';
         
         const isCustom = customRecipes.hasOwnProperty(name);
         const imageUrl = recipeImages[name];
         
         const imageHtml = imageUrl 
-            ? `<div class="recipe-card-image"><img src="${imageUrl}" alt="${name}"></div>`
-            : `<div class="recipe-card-image no-image">📦</div>`;
+            ? '<div class="recipe-card-image"><img src="' + imageUrl + '" alt="' + name + '"></div>'
+            : '<div class="recipe-card-image no-image">📦</div>';
         
-        const editBtn = `<button class="edit-recipe-btn" onclick="editRecipe('${name.replace(/'/g, "\\'")}')">✏️ Editar</button>`;
-        const deleteBtn = isCustom ? `<button class="delete-recipe-btn" onclick="deleteRecipe('${name.replace(/'/g, "\\'")}')">🗑️ Excluir</button>` : '';
+        const editBtn = '<button class="edit-recipe-btn" onclick="editRecipe(\'' + name.replace(/'/g, "\\\'" ) + '\')">✏️ Editar</button>';
+        const deleteBtn = isCustom ? '<button class="delete-recipe-btn" onclick="deleteRecipe(\'' + name.replace(/'/g, "\\\'" ) + '\')">🗑️ Excluir</button>' : '';
         
         card.innerHTML = `
             ${imageHtml}
@@ -601,7 +601,7 @@ function updateStorageInfo() {
     const recipeImagesStr = localStorage.getItem('recipeImages') || '{}';
     const totalSize = new Blob([customRecipesStr + recipeImagesStr]).size;
     const sizeKB = (totalSize / 1024).toFixed(2);
-    document.getElementById('storage-size').textContent = `${sizeKB} KB`;
+    document.getElementById('storage-size').textContent = sizeKB + ' KB';
     
     // Contadores
     const customCount = Object.keys(customRecipes).length;
