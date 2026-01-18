@@ -631,14 +631,62 @@ exportDataBtn.addEventListener('click', () => {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `crafting-recipes-${Date.now()}.json`;
+    link.download = 'crafting-recipes-' + Date.now() + '.json';
     link.click();
     
     URL.revokeObjectURL(url);
     alert('✅ Dados exportados com sucesso!');
 });
 
-// Importar dados do Firebase.\n\nDeseja continuar?`)) {
+// Importar dados
+importDataBtn.addEventListener('click', () => {
+    importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+            
+            if (data.customRecipes) {
+                Object.assign(customRecipes, data.customRecipes);
+                Object.assign(recipes, data.customRecipes);
+            }
+            
+            if (data.recipeImages) {
+                Object.assign(recipeImages, data.recipeImages);
+            }
+            
+            saveCustomRecipes();
+            populateItemSelect();
+            updateStorageInfo();
+            
+            alert('✅ Dados importados com sucesso!\n' + Object.keys(data.customRecipes || {}).length + ' receitas adicionadas.');
+        } catch (error) {
+            alert('❌ Erro ao importar dados. Verifique se o arquivo é válido.');
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+    
+    // Limpar input para permitir reimportar o mesmo arquivo
+    e.target.value = '';
+});
+
+// Limpar armazenamento
+clearStorageBtn.addEventListener('click', () => {
+    const count = Object.keys(customRecipes).length;
+    
+    if (!count) {
+        alert('ℹ️ Não há dados customizados para limpar.');
+        return;
+    }
+    
+    if (confirm('⚠️ ATENÇÃO!\n\nIsso vai apagar TODAS as ' + count + ' receita(s) customizada(s) e imagens do Firebase.\n\nDeseja continuar?')) {
         if (confirm('🚨 Tem CERTEZA ABSOLUTA? Esta ação não pode ser desfeita!')) {
             updateSyncStatus('syncing', '🔄 Limpando...');
             
@@ -671,55 +719,7 @@ exportDataBtn.addEventListener('click', () => {
                     console.error('Erro ao limpar:', error);
                     updateSyncStatus('error', '❌ Erro ao limpar');
                     alert('❌ Erro ao limpar dados: ' + error.message);
-                }
-                Object.assign(recipeImages, data.recipeImages);
-            }
-            
-            saveCustomRecipes();
-            populateItemSelect();
-            updateStorageInfo();
-            
-            alert(`✅ Dados importados com sucesso!\n${Object.keys(data.customRecipes || {}).length} receitas adicionadas.`);
-        } catch (error) {
-            alert('❌ Erro ao importar dados. Verifique se o arquivo é válido.');
-            console.error(error);
-        }
-    };
-    reader.readAsText(file);
-    
-    // Limpar input para permitir reimportar o mesmo arquivo
-    e.target.value = '';
-});
-
-// Limpar armazenamento
-clearStorageBtn.addEventListener('click', () => {
-    const count = Object.keys(customRecipes).length;
-    
-    if (!count) {
-        alert('ℹ️ Não há dados customizados para limpar.');
-        return;
-    }
-    
-    if (confirm(`⚠️ ATENÇÃO!\n\nIsso vai apagar TODAS as ${count} receita(s) customizada(s) e imagens.\n\nDeseja continuar?`)) {
-        if (confirm('🚨 Tem CERTEZA ABSOLUTA? Esta ação não pode ser desfeita!')) {
-            // Limpar tudo
-            customRecipes = {};
-            recipeImages = {};
-            localStorage.removeItem('customRecipes');
-            localStorage.removeItem('recipeImages');
-            
-            // Recarregar receitas padrão
-            Object.keys(recipes).forEach(key => {
-                if (!recipes[key].materials) {
-                    delete recipes[key];
-                }
-            });
-            
-            populateItemSelect();
-            updateStorageInfo();
-            displayExistingRecipes();
-            
-            alert('✅ Todos os dados customizados foram removidos!');
+                });
         }
     }
 });
