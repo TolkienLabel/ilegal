@@ -56,6 +56,7 @@
             <button class="tab-btn active" data-tab="crafting">🔨 Crafting</button>
             <button class="tab-btn" data-tab="npc-sales">💰 Venda NPC</button>
             <button class="tab-btn" data-tab="third-party">🛒 Compra de Terceiros</button>
+            <button class="tab-btn" data-tab="lavagem">💵 Lavagem</button>
             <button class="tab-btn" data-tab="mapa">🗺️ Mapa</button>
         </div>
         
@@ -159,6 +160,39 @@
                             <span class="summary-value total-value">$<span id="third-party-total-value">0</span></span>
                         </div>
                         <button id="clear-third-party-btn" class="clear-btn">🗑️ Limpar Seleção</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Lavagem -->
+        <div id="lavagem-tab" class="tab-content">
+            <div class="third-party-section">
+                <h2>💵 Sistema de Lavagem</h2>
+                
+                <div class="tax-buttons">
+                    <button class="tax-btn" data-rate="30" onclick="setLavagemRate(30)">👤 Normal (30%)</button>
+                    <button class="tax-btn active" data-rate="20" onclick="setLavagemRate(20)">🤝 Aliados (20%)</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="lavagem-value">💰 Valor a Lavar (Dinheiro Sujo):</label>
+                    <input type="number" id="lavagem-value" placeholder="Digite o valor..." min="0" step="100" oninput="calculateLavagem()">
+                </div>
+
+                <div class="third-party-total">
+                    <h3>📊 Resultado da Lavagem</h3>
+                    <div class="total-row">
+                        <span>💰 Dinheiro Sujo (Recebeu):</span>
+                        <span id="lavagem-base-total" class="total-value">$0</span>
+                    </div>
+                    <div class="total-row tax-row">
+                        <span>💵 Sua Taxa de Serviço (<span id="lavagem-keep-label">20%</span>):</span>
+                        <span id="lavagem-final-total" class="final-value">$0</span>
+                    </div>
+                    <div class="total-row final-row">
+                        <span>✅ Devolver Limpo (<span id="lavagem-loss-label">80%</span>):</span>
+                        <span id="lavagem-tax-amount" class="tax-value">$0</span>
                     </div>
                 </div>
             </div>

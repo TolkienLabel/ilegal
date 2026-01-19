@@ -1025,3 +1025,41 @@ clearThirdPartyBtn.addEventListener('click', () => {
         updateThirdPartyTotal();
     }
 });
+
+// ==================== SISTEMA DE LAVAGEM ====================
+
+let currentLavagemRate = 20; // 20% padrão (aliados)
+
+// Função para definir taxa de lavagem
+window.setLavagemRate = function(rate) {
+    currentLavagemRate = rate;
+    const lossPercent = 100 - rate;
+    
+    document.getElementById('lavagem-keep-label').textContent = rate + '%';
+    document.getElementById('lavagem-loss-label').textContent = lossPercent + '%';
+    
+    // Atualizar botões ativos
+    document.querySelectorAll('#lavagem-tab .tax-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.rate) === rate) {
+            btn.classList.add('active');
+        }
+    });
+    
+    calculateLavagem();
+};
+
+// Calcular lavagem
+window.calculateLavagem = function() {
+    const valueInput = document.getElementById('lavagem-value');
+    const baseTotal = parseInt(valueInput.value) || 0;
+    
+    // Sua taxa de serviço (você fica com 20% ou 30%)
+    const yourFee = Math.round(baseTotal * (currentLavagemRate / 100));
+    // Dinheiro limpo para devolver ao cliente (70% ou 80%)
+    const returnClean = baseTotal - yourFee;
+    
+    document.getElementById('lavagem-base-total').textContent = formatNumber(baseTotal);
+    document.getElementById('lavagem-final-total').textContent = formatNumber(yourFee);
+    document.getElementById('lavagem-tax-amount').textContent = formatNumber(returnClean);
+};

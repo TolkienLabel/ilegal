@@ -1896,4 +1896,76 @@ button {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* ==================== LAVAGEM ==================== */
+#lavagem-tab .input-group {
+    max-width: 600px;
+    margin: 0 auto 30px auto;
+}
 
+#lavagem-tab #lavagem-value {
+    font-size: 20px;
+    text-align: center;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(30, 30, 30, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+#lavagem-tab #lavagem-value:focus {
+    border-color: #dc143c;
+    box-shadow: 0 0 10px rgba(220, 20, 60, 0.3);
+}
+
+#lavagem-tab .third-party-total {
+    max-width: 700px;
+    margin: 30px auto;
+    background: rgba(30, 30, 30, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 30px;
+}
+
+#lavagem-tab .third-party-total h3 {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.5em;
+}
+
+#lavagem-tab .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    background: rgba(40, 40, 40, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#lavagem-tab .total-row span:first-child {
+    color: #ccc;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#lavagem-tab .total-row span:last-child {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+#lavagem-tab .total-row.tax-row span:last-child {
+    color: #ffd700;
+}
+
+#lavagem-tab .total-row.final-row {
+    background: rgba(220, 20, 60, 0.15);
+    border: 2px solid #dc143c;
+    padding: 20px;
+}
+
+#lavagem-tab .total-row.final-row span:last-child {
+    color: #4ade80;
+    font-size: 28px;
+}
