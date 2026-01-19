@@ -50,12 +50,7 @@ const thirdPartyTotalValue = document.getElementById('third-party-total-value');
 const clearThirdPartyBtn = document.getElementById('clear-third-party-btn');
 const taxBtns = document.querySelectorAll('.tax-btn');
 
-// Configuração do Firebase
-const firebaseConfig = {
-    databaseURL: "https://primordial-mile-249702-default-rtdb.firebaseio.com/"
-};
-
-firebase.initializeApp(firebaseConfig);
+// Usar Firebase já inicializado
 const database = firebase.database();
 const recipesRef = database.ref('crafting/customRecipes');
 const imagesRef = database.ref('crafting/recipeImages');
@@ -121,7 +116,7 @@ const npcData = {
 let npcItemsQuantity = {};
 let thirdPartyItemsQuantity = {};
 let thirdPartySelectedItems = {};
-let currentTaxRate = 20; // Taxa padrão 20%
+let currentTaxRate = 30; // Taxa padrão 30%
 
 // Criar lista consolidada de todos os itens
 let allItems = [];
@@ -883,8 +878,10 @@ const itemSuggestions = document.getElementById('item-suggestions');
 itemSearchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase().trim();
     
-    if (searchTerm.length < 2) {
+    // Fecha o dropdown se apagar tudo ou se tiver menos de 2 caracteres
+    if (searchTerm.length === 0 || searchTerm.length < 2) {
         itemSuggestions.classList.add('hidden');
+        itemSuggestions.innerHTML = '';
         return;
     }
     
@@ -928,6 +925,7 @@ function addItemToList(item) {
     }
     
     itemSearchInput.value = '';
+    itemSuggestions.innerHTML = '';
     itemSuggestions.classList.add('hidden');
     displayThirdPartyItemsGrid();
     updateThirdPartyTotal();
@@ -1010,7 +1008,7 @@ function updateThirdPartyTotal() {
     });
     
     const taxAmount = Math.round(baseTotal * (currentTaxRate / 100));
-    const finalTotal = baseTotal + taxAmount;
+    const finalTotal = baseTotal - taxAmount;
     
     thirdPartyBaseValue.textContent = formatNumber(baseTotal);
     thirdPartyTaxValue.textContent = formatNumber(taxAmount);

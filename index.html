@@ -3,14 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Crafting</title>
+    <title>Sinners MC - Sistema</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏴‍☠️</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Modal de Login -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-content">
+            <img src="sinners-banner.png" alt="Sinners MC" class="login-banner">
+            <p class="login-subtitle">Sistema Interno - Digite seu ID</p>
+            <input type="text" id="idInput" placeholder="Digite seu ID..." inputmode="numeric" pattern="[0-9]*" class="login-input">
+            <div id="statusMsg" class="login-status"></div>
+            <button onclick="verificarID()" class="login-btn">🔓 ACESSAR</button>
+            <small class="login-hint">Pressione Enter para enviar</small>
+        </div>
+    </div>
+    
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <h3>👑 Painel Admin</h3>
+        <div class="admin-section">
+            <input type="text" id="newIdInput" placeholder="Novo ID..." inputmode="numeric" pattern="[0-9]*" class="admin-input">
+            <button onclick="aprovarID()" class="admin-btn approve">✅ Aprovar ID</button>
+        </div>
+        <div class="admin-section">
+            <button onclick="mostrarLogs()" class="admin-btn logs">📋 Ver Logs</button>
+        </div>
+        <div class="admin-section">
+            <button onclick="mostrarIDsAprovados()" class="admin-btn users">👥 IDs Aprovados</button>
+        </div>
+        <button onclick="fecharAdminPanel()" class="admin-btn close">❌ Fechar</button>
+    </div>
+    
+    <!-- Main Container -->
+    <div id="mainContainer" class="container hidden">
         <div class="header">
-            <h1>🔨 Sistema de Crafting & Vendas</h1>
+            <img src="logo.png" alt="Sinners MC" style="height: 120px; margin: 15px 0;">
             <div class="header-buttons">
+                <div class="user-info">
+                    ID: <span id="currentUserId" class="user-id"></span>
+                    <button onclick="logout()" class="logout-btn">🚪 Sair</button>
+                    <button id="adminBtn" onclick="toggleAdminPanel()" class="admin-toggle-btn hidden">👑 Admin</button>
+                </div>
                 <span id="sync-status" class="sync-status">🔄 Conectando...</span>
                 <button id="manage-recipes-btn" class="manage-btn">⚙️ Gerenciar Receitas</button>
             </div>
@@ -21,6 +56,7 @@
             <button class="tab-btn active" data-tab="crafting">🔨 Crafting</button>
             <button class="tab-btn" data-tab="npc-sales">💰 Venda NPC</button>
             <button class="tab-btn" data-tab="third-party">🛒 Compra de Terceiros</button>
+            <button class="tab-btn" data-tab="mapa">🗺️ Mapa</button>
         </div>
         
         <!-- Tab Content: Crafting -->
@@ -92,8 +128,8 @@
                 <div class="tax-selection">
                     <label>Tipo de Negociação:</label>
                     <div class="tax-buttons">
-                        <button class="tax-btn active" data-tax="20">👤 Normal (20%)</button>
-                        <button class="tax-btn" data-tax="10">🤝 Aliados (10%)</button>
+                        <button class="tax-btn active" data-tax="30">👤 Normal (30%)</button>
+                        <button class="tax-btn" data-tax="20">🤝 Aliados (20%)</button>
                     </div>
                 </div>
                 
@@ -116,7 +152,7 @@
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">Taxa (<span id="third-party-tax-percent">20</span>%):</span>
-                            <span class="summary-value tax-value">+$<span id="third-party-tax-value">0</span></span>
+                            <span class="summary-value tax-value">-$<span id="third-party-tax-value">0</span></span>
                         </div>
                         <div class="summary-row total-row">
                             <span class="summary-label">💰 Total a Pagar:</span>
@@ -125,6 +161,13 @@
                         <button id="clear-third-party-btn" class="clear-btn">🗑️ Limpar Seleção</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Mapa -->
+        <div id="mapa-tab" class="tab-content">
+            <div class="mapa-section">
+                <iframe src="mapa/index.html" class="mapa-iframe" frameborder="0"></iframe>
             </div>
         </div>
     </div>
@@ -186,7 +229,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
+    <!-- Inicializar Firebase ANTES de tudo -->
+    <script>
+        const firebaseConfig = {
+            databaseURL: "https://primordial-mile-249702-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    
     <script src="recipes.js"></script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
