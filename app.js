@@ -29,17 +29,26 @@ const cancelEditBtn = document.getElementById('cancel-edit-btn');
 const existingRecipes = document.getElementById('existing-recipes');
 const filterRecipes = document.getElementById('filter-recipes');
 
-// Elementos do modal de armazenamento
-const storageInfoBtn = document.getElementById('storage-info-btn');
-const storageModal = document.getElementById('storage-modal');
-const closeStorageModalBtn = document.getElementById('close-storage-modal');
-const exportDataBtn = document.getElementById('export-data-btn');
-const importDataBtn = document.getElementById('import-data-btn');
-const clearStorageBtn = document.getElementById('clear-storage-btn');
-const importFileInput = document.getElementById('import-file-input');
-
 // Elemento de status de sincronização
 const syncStatus = document.getElementById('sync-status');
+
+// Elementos NPC Sales
+const npcSelect = document.getElementById('npc-select');
+const npcItemsSection = document.getElementById('npc-items-section');
+const npcTitle = document.getElementById('npc-title');
+const npcItemsList = document.getElementById('npc-items-list');
+const npcTotalValue = document.getElementById('npc-total-value');
+const clearNpcBtn = document.getElementById('clear-npc-btn');
+
+// Elementos Third Party Purchase
+const thirdPartyItemsSection = document.getElementById('third-party-items-section');
+const thirdPartyItemsList = document.getElementById('third-party-items-list');
+const thirdPartyBaseValue = document.getElementById('third-party-base-value');
+const thirdPartyTaxPercent = document.getElementById('third-party-tax-percent');
+const thirdPartyTaxValue = document.getElementById('third-party-tax-value');
+const thirdPartyTotalValue = document.getElementById('third-party-total-value');
+const clearThirdPartyBtn = document.getElementById('clear-third-party-btn');
+const taxBtns = document.querySelectorAll('.tax-btn');
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -59,6 +68,74 @@ let lastSyncTime = null;
 
 // Lista de crafting acumulada
 let craftingList = [];
+
+// Dados dos NPCs
+const npcData = {
+    galpao: {
+        name: '🏚️ NPC Galpão',
+        items: [
+            { name: 'Celular Quebrado', price: 750, limit: 20 },
+            { name: 'Carteira Vazia', price: 750, limit: 20 },
+            { name: 'Isqueiro', price: 750, limit: 20 },
+            { name: 'Carteira de Cigarro', price: 750, limit: 20 },
+            { name: 'Chave Reserva', price: 750, limit: 20 },
+            { name: 'Chave de Galpão', price: 900, limit: 20 },
+            { name: 'Placa Veicular', price: 1600, limit: 20 },
+            { name: 'Documento Rasgado', price: 1500, limit: 20 },
+            { name: 'Óculos de Sol', price: 1500, limit: 20 },
+            { name: 'Carteira com Documentos', price: 1500, limit: 20 },
+            { name: 'Cartão Bancário', price: 1500, limit: 20 },
+            { name: 'Cartão com Número Anotado', price: 1500, limit: 20 },
+            { name: 'Documento Corporativo', price: 1200, limit: 20 },
+            { name: 'Mapa Marcado', price: 1350, limit: 20 },
+            { name: 'Chave Sem Identificação', price: 1400, limit: 20 },
+            { name: 'Pendrive', price: 1200, limit: 20 },
+            { name: 'Documento Policial', price: 1600, limit: 20 },
+            { name: 'Diário', price: 1400, limit: 20 },
+            { name: 'Carta Manchada de Sangue', price: 1800, limit: 20 }
+        ]
+    },
+    'garagem-sul': {
+        name: '🚗 NPC Garagem Sul',
+        items: [
+            { name: 'Moeda Antiga', price: 2000, limit: 20 },
+            { name: 'Pendrive Criptografado', price: 2000, limit: 20 },
+            { name: 'Celular Queimado', price: 3000, limit: 20 },
+            { name: 'Máscara', price: 2400, limit: 20 },
+            { name: 'Spray de Pimenta', price: 2500, limit: 20 },
+            { name: 'Cartão de Acesso', price: 2000, limit: 20 },
+            { name: 'Chave Codificada', price: 2000, limit: 20 },
+            { name: 'Bilhete de Ameaça', price: 2300, limit: 20 },
+            { name: 'Contrato Rasgado', price: 2100, limit: 20 },
+            { name: 'Bolsa Pequena', price: 5000, limit: 20 },
+            { name: 'Colar', price: 4500, limit: 20 },
+            { name: 'GPS', price: 4000, limit: 20 },
+            { name: 'Fone de Ouvido', price: 4000, limit: 20 },
+            { name: 'Rastreador Desligado', price: 6000, limit: 20 },
+            { name: 'Luvas Táticas', price: 6000, limit: 20 },
+            { name: 'Tablet Descarregado', price: 6000, limit: 20 }
+        ]
+    }
+};
+
+let npcItemsQuantity = {};
+let thirdPartyItemsQuantity = {};
+let thirdPartySelectedItems = {};
+let currentTaxRate = 20; // Taxa padrão 20%
+
+// Criar lista consolidada de todos os itens
+let allItems = [];
+Object.keys(npcData).forEach(npcKey => {
+    npcData[npcKey].items.forEach(item => {
+        if (!allItems.find(i => i.name === item.name)) {
+            allItems.push({
+                name: item.name,
+                price: item.price,
+                npc: npcData[npcKey].name
+            });
+        }
+    });
+});
 
 // Atualizar status de sincronização
 function updateSyncStatus(status, message) {
@@ -641,143 +718,312 @@ filterRecipes.addEventListener('input', (e) => {
     displayExistingRecipes(e.target.value);
 });
 
-// Abrir modal de armazenamento
-storageInfoBtn.addEventListener('click', () => {
-    updateStorageInfo();
-    storageModal.classList.remove('hidden');
-});
+// ==================== SISTEMA DE TABS ====================
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
 
-// Fechar modal de armazenamento
-closeStorageModalBtn.addEventListener('click', () => {
-    storageModal.classList.add('hidden');
-});
-
-storageModal.addEventListener('click', (e) => {
-    if (e.target === storageModal) {
-        storageModal.classList.add('hidden');
-    }
-});
-
-// Atualizar informações de armazenamento
-function updateStorageInfo() {
-    database.ref('.info/connected').once('value', (snapshot) => {
-        const connected = snapshot.val();
-        document.getElementById('firebase-status').textContent = connected ? '🟢 Conectado' : '🔴 Desconectado';
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        
+        // Remove active de todas as tabs
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        // Adiciona active na tab selecionada
+        btn.classList.add('active');
+        document.getElementById(tabName + '-tab').classList.add('active');
     });
-    
-    const lastSync = lastSyncTime ? lastSyncTime.toLocaleString('pt-BR') : 'Nunca';
-    document.getElementById('last-sync').textContent = lastSync;
-    
-    const customCount = Object.keys(customRecipes).length;
-    const imagesCount = Object.keys(recipeImages).length;
-    document.getElementById('custom-count').textContent = customCount;
-    document.getElementById('images-count').textContent = imagesCount;
-    
-    document.getElementById('custom-recipes-display').textContent = JSON.stringify(customRecipes, null, 2);
-    document.getElementById('images-display').textContent = JSON.stringify(recipeImages, null, 2);
-}
-
-// Exportar dados
-exportDataBtn.addEventListener('click', () => {
-    const data = {
-        customRecipes: customRecipes,
-        recipeImages: recipeImages,
-        exportDate: new Date().toISOString(),
-        version: '1.0'
-    };
-    
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'crafting-recipes-' + Date.now() + '.json';
-    link.click();
-    
-    URL.revokeObjectURL(url);
-    alert('✅ Dados exportados com sucesso!');
 });
 
-// Importar dados
-importDataBtn.addEventListener('click', () => {
-    importFileInput.click();
-});
+// ==================== SISTEMA DE VENDAS NPC ====================
 
-importFileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+// Event listener para seleção de NPC
+npcSelect.addEventListener('change', () => {
+    const selectedNpc = npcSelect.value;
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        try {
-            const data = JSON.parse(event.target.result);
-            
-            if (data.customRecipes) {
-                Object.assign(customRecipes, data.customRecipes);
-                Object.assign(recipes, data.customRecipes);
-            }
-            
-            if (data.recipeImages) {
-                Object.assign(recipeImages, data.recipeImages);
-            }
-            
-            saveCustomRecipes();
-            populateItemSelect();
-            updateStorageInfo();
-            
-            alert('✅ Dados importados com sucesso!\n' + Object.keys(data.customRecipes || {}).length + ' receitas adicionadas.');
-        } catch (error) {
-            alert('❌ Erro ao importar dados. Verifique se o arquivo é válido.');
-            console.error(error);
-        }
-    };
-    reader.readAsText(file);
-    
-    e.target.value = '';
-});
-
-// Limpar armazenamento
-clearStorageBtn.addEventListener('click', () => {
-    const count = Object.keys(customRecipes).length;
-    
-    if (!count) {
-        alert('ℹ️ Não há dados customizados para limpar.');
+    if (!selectedNpc) {
+        npcItemsSection.classList.add('hidden');
         return;
     }
     
-    if (confirm('⚠️ ATENÇÃO!\n\nIsso vai apagar TODAS as ' + count + ' receita(s) customizada(s) e imagens do Firebase.\n\nDeseja continuar?')) {
-        if (confirm('🚨 Tem CERTEZA ABSOLUTA? Esta ação não pode ser desfeita!')) {
-            updateSyncStatus('syncing', '🔄 Limpando...');
-            
-            const updates = {};
-            updates['/crafting/customRecipes'] = null;
-            updates['/crafting/recipeImages'] = null;
-            
-            database.ref().update(updates)
-                .then(() => {
-                    customRecipes = {};
-                    recipeImages = {};
-                    
-                    Object.keys(recipes).forEach(key => {
-                        if (!recipes[key].materials) {
-                            delete recipes[key];
-                        }
-                    });
-                    
-                    populateItemSelect();
-                    updateStorageInfo();
-                    displayExistingRecipes();
-                    
-                    updateSyncStatus('connected', '✅ Conectado');
-                    alert('✅ Todos os dados customizados foram removidos do Firebase!');
-                })
-                .catch((error) => {
-                    console.error('Erro ao limpar:', error);
-                    updateSyncStatus('error', '❌ Erro ao limpar');
-                    alert('❌ Erro ao limpar dados: ' + error.message);
-                });
-        }
+    const npc = npcData[selectedNpc];
+    npcTitle.textContent = npc.name;
+    npcItemsQuantity = {};
+    
+    displayNpcItems(npc.items);
+    npcItemsSection.classList.remove('hidden');
+});
+
+// Exibir itens do NPC
+function displayNpcItems(items) {
+    npcItemsList.innerHTML = '';
+    
+    items.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'npc-item';
+        itemDiv.innerHTML = `
+            <div class="npc-item-info">
+                <span class="npc-item-name">${item.name}</span>
+                <span class="npc-item-price">$${formatNumber(item.price)}</span>
+                <span class="npc-item-limit">Limite: ${item.limit}/reset</span>
+            </div>
+            <div class="npc-item-controls">
+                <button class="npc-qty-btn" onclick="changeNpcQty(${index}, -1)">-</button>
+                <input type="number" 
+                       id="npc-qty-${index}" 
+                       class="npc-qty-input" 
+                       value="0" 
+                       min="0" 
+                       max="${item.limit}"
+                       onchange="updateNpcQty(${index}, this.value)">
+                <button class="npc-qty-btn" onclick="changeNpcQty(${index}, 1)">+</button>
+                <span class="npc-item-total">$<span id="npc-item-total-${index}">0</span></span>
+            </div>
+        `;
+        npcItemsList.appendChild(itemDiv);
+        
+        npcItemsQuantity[index] = 0;
+    });
+    
+    updateNpcTotal();
+}
+
+// Alterar quantidade do item
+window.changeNpcQty = function(index, change) {
+    const selectedNpc = npcSelect.value;
+    const npc = npcData[selectedNpc];
+    const item = npc.items[index];
+    const input = document.getElementById(`npc-qty-${index}`);
+    
+    let currentQty = parseInt(input.value) || 0;
+    let newQty = currentQty + change;
+    
+    // Validar limites
+    if (newQty < 0) newQty = 0;
+    if (newQty > item.limit) newQty = item.limit;
+    
+    input.value = newQty;
+    updateNpcQty(index, newQty);
+};
+
+// Atualizar quantidade do item
+window.updateNpcQty = function(index, value) {
+    const selectedNpc = npcSelect.value;
+    const npc = npcData[selectedNpc];
+    const item = npc.items[index];
+    
+    let qty = parseInt(value) || 0;
+    
+    // Validar limites
+    if (qty < 0) qty = 0;
+    if (qty > item.limit) qty = item.limit;
+    
+    npcItemsQuantity[index] = qty;
+    
+    // Atualizar total do item
+    const itemTotal = qty * item.price;
+    document.getElementById(`npc-item-total-${index}`).textContent = formatNumber(itemTotal);
+    
+    // Atualizar input se o valor foi corrigido
+    const input = document.getElementById(`npc-qty-${index}`);
+    if (input.value != qty) {
+        input.value = qty;
+    }
+    
+    updateNpcTotal();
+};
+
+// Atualizar total geral
+function updateNpcTotal() {
+    const selectedNpc = npcSelect.value;
+    if (!selectedNpc) return;
+    
+    const npc = npcData[selectedNpc];
+    let total = 0;
+    
+    Object.keys(npcItemsQuantity).forEach(index => {
+        const qty = npcItemsQuantity[index];
+        const item = npc.items[index];
+        total += qty * item.price;
+    });
+    
+    npcTotalValue.textContent = formatNumber(total);
+}
+
+// Limpar seleção NPC
+clearNpcBtn.addEventListener('click', () => {
+    const selectedNpc = npcSelect.value;
+    if (!selectedNpc) return;
+    
+    const npc = npcData[selectedNpc];
+    
+    if (confirm('🗑️ Limpar todas as quantidades selecionadas?')) {
+        npcItemsQuantity = {};
+        displayNpcItems(npc.items);
+    }
+});
+// ==================== SISTEMA DE COMPRA DE TERCEIROS ====================
+
+// Event listeners para seleção de taxa
+taxBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        taxBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTaxRate = parseInt(btn.dataset.tax);
+        thirdPartyTaxPercent.textContent = currentTaxRate;
+        updateThirdPartyTotal();
+    });
+});
+
+// Sistema de busca de itens
+const itemSearchInput = document.getElementById('item-search-input');
+const itemSuggestions = document.getElementById('item-suggestions');
+
+itemSearchInput.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    
+    if (searchTerm.length < 2) {
+        itemSuggestions.classList.add('hidden');
+        return;
+    }
+    
+    const matches = allItems.filter(item => 
+        item.name.toLowerCase().includes(searchTerm)
+    );
+    
+    if (matches.length === 0) {
+        itemSuggestions.classList.add('hidden');
+        return;
+    }
+    
+    displaySuggestions(matches);
+});
+
+function displaySuggestions(items) {
+    itemSuggestions.innerHTML = '';
+    
+    items.forEach(item => {
+        const suggestionDiv = document.createElement('div');
+        suggestionDiv.className = 'suggestion-item';
+        suggestionDiv.innerHTML = `
+            <span class="suggestion-name">${item.name}</span>
+            <span class="suggestion-price">$${formatNumber(item.price)}</span>
+        `;
+        suggestionDiv.addEventListener('click', () => addItemToList(item));
+        itemSuggestions.appendChild(suggestionDiv);
+    });
+    
+    itemSuggestions.classList.remove('hidden');
+}
+
+function addItemToList(item) {
+    if (!thirdPartySelectedItems[item.name]) {
+        thirdPartySelectedItems[item.name] = {
+            ...item,
+            quantity: 1
+        };
+    } else {
+        thirdPartySelectedItems[item.name].quantity++;
+    }
+    
+    itemSearchInput.value = '';
+    itemSuggestions.classList.add('hidden');
+    displayThirdPartyItemsGrid();
+    updateThirdPartyTotal();
+}
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-input-wrapper')) {
+        itemSuggestions.classList.add('hidden');
     }
 });
 
+// Exibir itens em grid
+function displayThirdPartyItemsGrid() {
+    thirdPartyItemsList.innerHTML = '';
+    
+    Object.keys(thirdPartySelectedItems).forEach(itemName => {
+        const item = thirdPartySelectedItems[itemName];
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'third-party-item-card';
+        itemDiv.innerHTML = `
+            <button class="remove-item-btn" onclick="removeThirdPartyItem('${itemName}')">×</button>
+            <div class="item-card-name">${item.name}</div>
+            <div class="item-card-price">$${formatNumber(item.price)}</div>
+            <div class="item-card-controls">
+                <button class="qty-btn-small" onclick="changeThirdPartyItemQty('${itemName}', -1)">-</button>
+                <input type="number" 
+                       class="qty-input-small" 
+                       value="${item.quantity}" 
+                       min="1"
+                       onchange="setThirdPartyItemQty('${itemName}', this.value)">
+                <button class="qty-btn-small" onclick="changeThirdPartyItemQty('${itemName}', 1)">+</button>
+            </div>
+            <div class="item-card-total">$${formatNumber(item.price * item.quantity)}</div>
+        `;
+        thirdPartyItemsList.appendChild(itemDiv);
+    });
+}
+
+// Alterar quantidade do item
+window.changeThirdPartyItemQty = function(itemName, change) {
+    if (thirdPartySelectedItems[itemName]) {
+        thirdPartySelectedItems[itemName].quantity += change;
+        
+        if (thirdPartySelectedItems[itemName].quantity < 1) {
+            thirdPartySelectedItems[itemName].quantity = 1;
+        }
+        
+        displayThirdPartyItemsGrid();
+        updateThirdPartyTotal();
+    }
+};
+
+// Definir quantidade do item
+window.setThirdPartyItemQty = function(itemName, value) {
+    let qty = parseInt(value) || 1;
+    if (qty < 1) qty = 1;
+    
+    if (thirdPartySelectedItems[itemName]) {
+        thirdPartySelectedItems[itemName].quantity = qty;
+        displayThirdPartyItemsGrid();
+        updateThirdPartyTotal();
+    }
+};
+
+// Remover item
+window.removeThirdPartyItem = function(itemName) {
+    delete thirdPartySelectedItems[itemName];
+    displayThirdPartyItemsGrid();
+    updateThirdPartyTotal();
+};
+
+// Atualizar total com taxa
+function updateThirdPartyTotal() {
+    let baseTotal = 0;
+    
+    Object.keys(thirdPartySelectedItems).forEach(itemName => {
+        const item = thirdPartySelectedItems[itemName];
+        baseTotal += item.price * item.quantity;
+    });
+    
+    const taxAmount = Math.round(baseTotal * (currentTaxRate / 100));
+    const finalTotal = baseTotal + taxAmount;
+    
+    thirdPartyBaseValue.textContent = formatNumber(baseTotal);
+    thirdPartyTaxValue.textContent = formatNumber(taxAmount);
+    thirdPartyTotalValue.textContent = formatNumber(finalTotal);
+}
+
+// Limpar seleção de compra de terceiros
+clearThirdPartyBtn.addEventListener('click', () => {
+    if (Object.keys(thirdPartySelectedItems).length === 0) return;
+    
+    if (confirm('🗑️ Limpar todos os itens selecionados?')) {
+        thirdPartySelectedItems = {};
+        displayThirdPartyItemsGrid();
+        updateThirdPartyTotal();
+    }
+});

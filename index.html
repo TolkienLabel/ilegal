@@ -9,21 +9,29 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔨 Sistema de Crafting</h1>
+            <h1>🔨 Sistema de Crafting & Vendas</h1>
             <div class="header-buttons">
                 <span id="sync-status" class="sync-status">🔄 Conectando...</span>
-                <button id="storage-info-btn" class="info-btn">💾 Ver Armazenamento</button>
                 <button id="manage-recipes-btn" class="manage-btn">⚙️ Gerenciar Receitas</button>
             </div>
         </div>
         
-        <div class="craft-section">
-            <div class="input-group">
-                <label for="item-select">Item para Craftar:</label>
-                <select id="item-select">
-                    <option value="">-- Selecione um item --</option>
-                </select>
-            </div>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="crafting">🔨 Crafting</button>
+            <button class="tab-btn" data-tab="npc-sales">💰 Venda NPC</button>
+            <button class="tab-btn" data-tab="third-party">🛒 Compra de Terceiros</button>
+        </div>
+        
+        <!-- Tab Content: Crafting -->
+        <div id="crafting-tab" class="tab-content active">
+            <div class="craft-section">
+                <div class="input-group">
+                    <label for="item-select">Item para Craftar:</label>
+                    <select id="item-select">
+                        <option value="">-- Selecione um item --</option>
+                    </select>
+                </div>
             
             <div class="input-group">
                 <label for="quantity">Quantidade:</label>
@@ -51,59 +59,76 @@
             <h3>🔄 Árvore de Crafting</h3>
             <div id="craft-tree"></div>
         </div>
-    </div>
-    
-    <!-- Modal de Armazenamento -->
-    <div id="storage-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>💾 Informações de Armazenamento</h2>
-                <button id="close-storage-modal" class="close-btn">&times;</button>
+        </div>
+
+        <!-- Tab Content: NPC Sales -->
+        <div id="npc-sales-tab" class="tab-content">
+            <div class="npc-section">
+                <div class="input-group">
+                    <label for="npc-select">Selecione o NPC:</label>
+                    <select id="npc-select">
+                        <option value="">-- Selecione um NPC --</option>
+                        <option value="galpao">🏚️ NPC Galpão</option>
+                        <option value="garagem-sul">🚗 NPC Garagem Sul</option>
+                    </select>
+                </div>
+                
+                <div id="npc-items-section" class="npc-items-section hidden">
+                    <h3 id="npc-title"></h3>
+                    <div id="npc-items-list"></div>
+                    
+                    <div class="npc-total">
+                        <h3>💰 Total da Venda</h3>
+                        <div class="total-value">$<span id="npc-total-value">0</span></div>
+                        <button id="clear-npc-btn" class="clear-btn">🗑️ Limpar Seleção</button>
+                    </div>
+                </div>
             </div>
-            
-            <div class="modal-body">
-                <div class="storage-info-section">
-                    <h3>📍 Localização dos Dados</h3>
-                    <div class="info-box">
-                        <p><strong>Sistema:</strong> Firebase Realtime Database</p>
-                        <p><strong>Database URL:</strong> <code>https://primordial-mile-249702-default-rtdb.firebaseio.com/</code></p>
-                        <p><strong>Caminhos usados:</strong></p>
-                        <ul>
-                            <li><code>/crafting/customRecipes</code> - Receitas customizadas</li>
-                            <li><code>/crafting/recipeImages</code> - URLs das imagens</li>
-                        </ul>
-                        <p><strong>Status:</strong> <span id="firebase-status"></span></p>
-                        <p><strong>Última sincronização:</strong> <span id="last-sync"></span></p>
+        </div>
+
+        <!-- Tab Content: Third Party Purchase -->
+        <div id="third-party-tab" class="tab-content">
+            <div class="third-party-section">
+                <div class="tax-selection">
+                    <label>Tipo de Negociação:</label>
+                    <div class="tax-buttons">
+                        <button class="tax-btn active" data-tax="20">👤 Normal (20%)</button>
+                        <button class="tax-btn" data-tax="10">🤝 Aliados (10%)</button>
                     </div>
                 </div>
                 
-                <div class="storage-data-section">
-                    <h3>📊 Dados Armazenados</h3>
-                    
-                    <h4>Receitas Customizadas (<span id="custom-count">0</span>):</h4>
-                    <div class="data-display">
-                        <pre id="custom-recipes-display"></pre>
-                    </div>
-                    
-                    <h4>Imagens (<span id="images-count">0</span>):</h4>
-                    <div class="data-display">
-                        <pre id="images-display"></pre>
+                <div class="item-search-section">
+                    <label for="item-search-input">Adicionar Item:</label>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="item-search-input" placeholder="Digite o nome do item..." autocomplete="off">
+                        <div id="item-suggestions" class="item-suggestions hidden"></div>
                     </div>
                 </div>
                 
-                <div class="storage-actions-section">
-                    <h3>⚙️ Ações</h3>
-                    <div class="action-buttons">
-                        <button id="export-data-btn" class="action-btn export-btn">📤 Exportar Dados (JSON)</button>
-                        <button id="import-data-btn" class="action-btn import-btn">📥 Importar Dados</button>
-                        <button id="clear-storage-btn" class="action-btn danger-btn">🗑️ Limpar Tudo</button>
+                <div id="third-party-items-section" class="third-party-items-section">
+                    <h3>Itens Selecionados</h3>
+                    <div id="third-party-items-list" class="items-grid"></div>
+                    
+                    <div class="third-party-summary">
+                        <div class="summary-row">
+                            <span class="summary-label">Valor Base:</span>
+                            <span class="summary-value">$<span id="third-party-base-value">0</span></span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-label">Taxa (<span id="third-party-tax-percent">20</span>%):</span>
+                            <span class="summary-value tax-value">+$<span id="third-party-tax-value">0</span></span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span class="summary-label">💰 Total a Pagar:</span>
+                            <span class="summary-value total-value">$<span id="third-party-total-value">0</span></span>
+                        </div>
+                        <button id="clear-third-party-btn" class="clear-btn">🗑️ Limpar Seleção</button>
                     </div>
-                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal de Gerenciamento de Receitas -->
     <div id="recipe-modal" class="modal hidden">
         <div class="modal-content">
